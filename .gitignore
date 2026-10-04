@@ -1,0 +1,17 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Temporary speech and media files
+temp_speech.mp3
+test_bn.mp3
+*.wav
+*.mp3
+
+# Logs and environment
+logs/
+*.log
+.env
+*.token
+*.pickle

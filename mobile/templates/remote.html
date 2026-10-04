@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>JUBAYER AI // মোবাইল রিমোট</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    body {
+      background: #0d0f14;
+      color: #e0f2fe;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      overflow-x: hidden;
+      touch-action: pan-y;
+      user-select: none;
+    }
+    header {
+      background: rgba(13, 15, 20, 0.95);
+      padding: 12px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #0284c7;
+    }
+    .brand { font-weight: bold; font-size: 16px; color: #38bdf8; letter-spacing: 1px; }
+    .status-dot { width: 10px; height: 10px; background: #22c55e; border-radius: 50%; box-shadow: 0 0 8px #22c55e; }
+    
+    /* Touchpad Area */
+    .touchpad-box {
+      margin: 12px 16px;
+      height: 250px;
+      background: #151922;
+      border: 2px dashed #0284c7;
+      border-radius: 16px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+      touch-action: none;
+      box-shadow: inset 0 0 20px rgba(2, 132, 199, 0.2);
+    }
+    .touchpad-label { color: #64748b; font-size: 14px; pointer-events: none; }
+    
+    /* Mouse Buttons */
+    .mouse-buttons {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin: 0 16px 12px 16px;
+    }
+    .mouse-btn {
+      background: #1e293b;
+      color: #38bdf8;
+      border: 1px solid #0284c7;
+      padding: 14px;
+      border-radius: 12px;
+      font-weight: bold;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    .mouse-btn:active { background: #0284c7; color: #fff; }
+
+    /* Voice Mic Section */
+    .mic-section {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin: 16px 0;
+    }
+    .mic-btn {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      background: radial-gradient(circle, #0284c7 0%, #0369a1 100%);
+      border: 3px solid #38bdf8;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 28px;
+      box-shadow: 0 0 20px rgba(56, 189, 248, 0.5);
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .mic-btn.listening {
+      background: radial-gradient(circle, #ef4444 0%, #b91c1c 100%);
+      border-color: #f87171;
+      box-shadow: 0 0 25px rgba(239, 68, 68, 0.8);
+      animation: pulse 1s infinite alternate;
+    }
+    @keyframes pulse {
+      from { transform: scale(1.0); }
+      to { transform: scale(1.12); }
+    }
+    .mic-hint { font-size: 12px; color: #94a3b8; margin-top: 8px; }
+
+    /* Remote Actions Grid */
+    .actions-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin: 0 16px 20px 16px;
+    }
+    .action-card {
+      background: #1e293b;
+      border: 1px solid #334155;
+      padding: 12px 6px;
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      cursor: pointer;
+      color: #cbd5e1;
+    }
+    .action-card:active { background: #0284c7; color: #fff; border-color: #38bdf8; }
+    .action-card .icon { font-size: 20px; }
+    .action-card.danger { border-color: #ef4444; color: #f87171; }
+    .action-card.danger:active { background: #ef4444; color: #fff; }
+
+    /* Virtual Keyboard Typing */
+    .typing-box {
+      margin: 0 16px 30px 16px;
+      display: flex;
+      gap: 8px;
+    }
+    .type-input {
+      flex: 1;
+      background: #1e293b;
+      border: 1px solid #334155;
+      color: #fff;
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-size: 14px;
+      outline: none;
+    }
+    .type-input:focus { border-color: #38bdf8; }
+    .send-btn {
+      background: #0284c7;
+      color: #fff;
+      border: none;
+      padding: 0 16px;
+      border-radius: 10px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .feedback-toast {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(2, 132, 199, 0.9);
+      color: #fff;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 12px;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="brand">JUBAYER AI // রিমোট</div>
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <span style="font-size: 12px; color: #22c55e;">সংযুক্ত</span>
+      <div class="status-dot"></div>
+    </div>
+  </header>
+
+  <!-- Virtual Touchpad -->
+  <div class="touchpad-box" id="touchpad">
+    <span class="touchpad-label">🖐️ টাচপ্যাড: আঙুল দিয়ে মাউস নাড়ান</span>
+  </div>
+
+  <!-- Mouse Buttons -->
+  <div class="mouse-buttons">
+    <button class="mouse-btn" onclick="sendClick('left')">লেফট ক্লিক</button>
+    <button class="mouse-btn" onclick="sendClick('right')">রাইট ক্লিক</button>
+  </div>
+
+  <!-- Voice Mic -->
+  <div class="mic-section">
+    <div class="mic-btn" id="micBtn" onclick="toggleVoice()">🎙️</div>
+    <div class="mic-hint" id="micStatus">মাইকে চাপ দিয়ে কথা বলুন</div>
+  </div>
+
+  <!-- Quick Action Controls -->
+  <div class="actions-grid">
+    <div class="action-card" onclick="sendAction('vol_up')"><span class="icon">🔊</span>ভলিউম +</div>
+    <div class="action-card" onclick="sendAction('vol_down')"><span class="icon">🔉</span>ভলিউম -</div>
+    <div class="action-card" onclick="sendAction('mute')"><span class="icon">🔇</span>প্লে / পজ</div>
+    <div class="action-card" onclick="sendAction('screenshot')"><span class="icon">📸</span>স্ক্রিনশট</div>
+    <div class="action-card" onclick="sendAction('desktop')"><span class="icon">🖥️</span>ডেস্কটপ</div>
+    <div class="action-card" onclick="sendAction('lock')"><span class="icon">🔒</span>পিসি লক</div>
+    <div class="action-card" onclick="sendAction('browser')"><span class="icon">🌐</span>ক্রোম</div>
+    <div class="action-card" onclick="sendAction('youtube')"><span class="icon">▶️</span>ইউটিউব</div>
+    <div class="action-card danger" onclick="confirmShutdown()"><span class="icon">⏻</span>শাটডাউন</div>
+  </div>
+
+  <!-- Mobile Typing directly into PC -->
+  <div class="typing-box">
+    <input type="text" id="typeInput" class="type-input" placeholder="এখানে লিখে পিসিতে পাঠান...">
+    <button class="send-btn" onclick="sendTyping()">পাঠান</button>
+  </div>
+
+  <div class="feedback-toast" id="toast"></div>
+
+  <script>
+    // 1. Touchpad Logic
+    const pad = document.getElementById('touchpad');
+    let lastX = 0, lastY = 0, isTouching = false;
+
+    pad.addEventListener('touchstart', (e) => {
+      isTouching = true;
+      const t = e.touches[0];
+      lastX = t.clientX;
+      lastY = t.clientY;
+    });
+
+    pad.addEventListener('touchmove', (e) => {
+      if (!isTouching) return;
+      e.preventDefault();
+      const t = e.touches[0];
+      const dx = (t.clientX - lastX) * 1.5;
+      const dy = (t.clientY - lastY) * 1.5;
+      lastX = t.clientX;
+      lastY = t.clientY;
+
+      fetch('/api/mouse/move', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({dx: dx, dy: dy})
+      }).catch(()=>{});
+    });
+
+    pad.addEventListener('touchend', () => { isTouching = false; });
+
+    // 2. Mouse Clicks
+    function sendClick(btn) {
+      fetch('/api/mouse/click', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({button: btn})
+      });
+      showToast(btn === 'left' ? 'ক্লিক হয়েছে' : 'রাইট ক্লিক হয়েছে');
+    }
+
+    // 3. Quick Actions
+    function sendAction(act) {
+      fetch('/api/action', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({action: act})
+      });
+      showToast('কমান্ড কার্যকর হয়েছে');
+    }
+
+    function confirmShutdown() {
+      if (confirm('আপনি কি নিশ্চিত যে আপনার কম্পিউটার শাটডাউন করতে চান?')) {
+        sendAction('shutdown');
+      }
+    }
+
+    // 4. Remote Typing into PC
+    function sendTyping() {
+      const input = document.getElementById('typeInput');
+      const val = input.value;
+      if (!val) return;
+      fetch('/api/type', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({text: val})
+      });
+      input.value = '';
+      showToast('পিসিতে টাইপ করা হয়েছে');
+    }
+
+    // 5. Mobile Voice Recognition via HTML5 Web Speech
+    let recognition;
+    let isListening = false;
+    const micBtn = document.getElementById('micBtn');
+    const micStatus = document.getElementById('micStatus');
+
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      recognition = new SpeechRecognition();
+      recognition.lang = 'bn-BD';
+      recognition.continuous = false;
+      recognition.interimResults = false;
+
+      recognition.onstart = () => {
+        isListening = true;
+        micBtn.classList.add('listening');
+        micStatus.innerText = 'কথা বলুন, শুনছি...';
+      };
+
+      recognition.onresult = (e) => {
+        const transcript = e.results[0][0].transcript;
+        micStatus.innerText = `শুনেছি: "${transcript}"`;
+        showToast(`কমান্ড পাঠানো হয়েছে: ${transcript}`);
+        fetch('/api/command', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({command: transcript})
+        });
+      };
+
+      recognition.onerror = () => {
+        isListening = false;
+        micBtn.classList.remove('listening');
+        micStatus.innerText = 'ত্রুটি হয়েছে, পুনরায় চেষ্টা করুন';
+      };
+
+      recognition.onend = () => {
+        isListening = false;
+        micBtn.classList.remove('listening');
+        micStatus.innerText = 'মাইকে চাপ দিয়ে কথা বলুন';
+      };
+    }
+
+    function toggleVoice() {
+      if (!recognition) {
+        alert('আপনার ব্রাউজার ভয়েস সমর্থন করছে না। ক্রোম বা সাফারি ব্যবহার করুন।');
+        return;
+      }
+      if (isListening) {
+        recognition.stop();
+      } else {
+        recognition.start();
+      }
+    }
+
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.innerText = msg;
+      t.style.opacity = '1';
+      setTimeout(() => { t.style.opacity = '0'; }, 2000);
+    }
+  </script>
+</body>
+</html>
